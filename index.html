@@ -1,0 +1,354 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Hydra Sublenguaje</title>
+  <script src="https://unpkg.com/hydra-synth"></script>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      height: 100%;
+      background: black;
+    }
+
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 0;
+    }
+
+    #input {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80%;
+      max-width: 600px;
+      height: 80px;
+      background: rgba(0, 0, 0, 0.5);
+      color: white;
+      font-size: 18px;
+      border: 2px solid white;
+      border-radius: 10px;
+      padding: 10px;
+      z-index: 10;
+      backdrop-filter: blur(4px);
+      resize: none;
+    }
+
+    /* Botón de palabras */
+    #wordButton {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      border: 2px solid white;
+      border-radius: 8px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      z-index: 20;
+      backdrop-filter: blur(4px);
+      transition: all 0.3s ease;
+      font-family: monospace;
+    }
+
+    #wordButton:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: scale(1.05);
+    }
+
+    /* Panel desplegable de palabras */
+    #wordPanel {
+      position: fixed;
+      top: 70px;
+      right: 20px;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      border: 2px solid white;
+      border-radius: 10px;
+      padding: 15px;
+      z-index: 20;
+      max-width: 300px;
+      max-height: 70vh;
+      overflow-y: auto;
+      display: none;
+      font-family: monospace;
+      color: white;
+      transition: all 0.3s ease;
+    }
+
+    #wordPanel.show {
+      display: block;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    #wordPanel h3 {
+      margin: 0 0 10px 0;
+      text-align: center;
+      color: #ff6b6b;
+      border-bottom: 1px solid white;
+      padding-bottom: 5px;
+    }
+
+    .word-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .word-item {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 8px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border-left: 3px solid #ff6b6b;
+    }
+
+    .word-item:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateX(-5px);
+    }
+
+    .word-name {
+      font-weight: bold;
+      color: #ff6b6b;
+      margin-bottom: 3px;
+    }
+
+    .word-desc {
+      font-size: 11px;
+      color: #ccc;
+      font-style: italic;
+    }
+
+    .close-panel {
+      position: absolute;
+      top: 5px;
+      right: 10px;
+      cursor: pointer;
+      font-size: 20px;
+      color: white;
+      background: none;
+      border: none;
+      font-weight: bold;
+    }
+
+    .close-panel:hover {
+      color: #ff6b6b;
+    }
+
+    /* Scrollbar personalizada */
+    #wordPanel::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    #wordPanel::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+
+    #wordPanel::-webkit-scrollbar-thumb {
+      background: #ff6b6b;
+      border-radius: 4px;
+    }
+
+    #wordPanel::-webkit-scrollbar-thumb:hover {
+      background: #ff4444;
+    }
+  </style>
+</head>
+<body>
+  <button id="wordButton">📖 Palabras disponibles</button>
+
+  <div id="wordPanel">
+    <button class="close-panel" id="closePanel">✕</button>
+    <h3>✨ Palabras que activan patrones ✨</h3>
+    <div class="word-list" id="wordList"></div>
+  </div>
+
+  <textarea id="input" placeholder="Escribe palabras y letras cortas (ej: paco, mestizo, a, b, c...)"></textarea>
+
+  <script>
+    const hydra = new Hydra({ detectAudio: false });
+
+    const palabras = {
+      paco: () => osc(2, 0.5, 2).colorama(0.1),
+      mestizo: () => voronoi(0.3,0.5,10).colorama(6.6),
+      periquin: () => voronoi(9,8,-0.5).colorama(0.2).modulatePixelate(noise(),1),
+      kenya: () => noise(2, 0.5, 2).colorama(-0.9),
+      fuego: () => noise(6, 0.5, 2).colorama(0.2).modulateScale(o0, 0.8),
+      delirio: () => osc(10, 0.5, 2).colorama(-0.9).modulate(o0, 0.5),
+      amor: () => voronoi(2, 0.5, 2).colorama(-0.9).modulate(osc(3, 0.5, 1), 0.5),
+      remix: () => noise(3, 0.4).modulate(osc(2, 0.5, 2), 0.9).diff(noise(2, 0.5, 2)),
+      a: () => voronoi([4,2],7,2).modulatePixelate(osc(),0.70,0.5).scale(2).colorama(-0.95),
+      b: () => osc().modulate(noise(),0.25).scale([1,3,6],5).colorama(-0.40).colorama(1),
+      c: () => noise(15).modulate(voronoi(3,2,5)).kaleid(30).colorama(0.40).colorama(0.5).scale(1),
+      d: () => shape(4,0.5,0.9).modulateRotate(noise(),0.9).mult(osc(50)).scale([0.90].fast(10)).colorama(8),
+      e: () => voronoi().modulateRotate(osc(1,0.5,0).kaleid(10).scale(0.5),9,0).mult(osc(5,-0.1,8).kaleid(9)).colorama(0.5),
+      f: () => osc([5,3,9]).modulatePixelate(noise(),8).mult(osc([10])).scale([0.90].fast(20)).colorama(-0.70),
+      g: () => noise([4,8,2],6,0.5).colorama(0.590).pixelate(10,8).modulateRotate(noise([5,8]),0.9,4),
+      h: () => noise(10,4,10).modulateRepeatX(osc([15,9]),0.5).colorama(-0.590).mult(osc([3],6,0.6)).scale([0.9].fast(205)),
+      i: () => osc().scale(10).rotate(4,5).kaleid(10).colorama(0.9).modulateScrollX(osc(),0.5).mult(voronoi([5,8],8)).colorama(0.8),
+      j: () => voronoi([9,15],3,4).colorama(-0.6).modulatePixelate(voronoi([9,10]),0.5).colorama(1).mult(osc([3,5]),0.5).colorama(-0.2).luma(0.3,0.5),
+      k: () => osc([15,5,1],25,3).colorama(-0.10).modulateKaleid(noise([5,1]),0.5).rotate(8,5).scale(0.45,3,5).colorama(-5),
+      traduccion: () => voronoi(.5,.2,.9).modulate(noise(.5),0.5).color(9,5,6).luma(0.5),
+      global: () => osc(2,1,.009).pixelate(10,10).kaleid(8),
+      intraducibilidad: () => noise(5).color(4,5,7).pixelate(10,10),
+      follow: () => osc(4,0.1,2).luma(0).mult(voronoi([10,5,15],0.2, 0.5).thresh(0.5, 0.1)).scale([2,3].fast(1.2)).rotate(15,2).modulate(src(o0)).modulateScale(osc([1,4,8],-0.5,0).scale(2),15,0).modulatePixelate(noise(5).pixelate([8,2,5],[2,8,5]),1024,8),
+      magt: () => {
+        osc(40,0.5,() => a.fft[0]*200).out(o2)
+        let shape = osc(60, 0.1, 2)
+          .mult(noise(1, 4))
+          .rotate(() => (Math.random() - 0.5) * 0.5 + Math.sin(time * 0.2) * 0.2)
+        shape.out(o0)
+        return shape
+      },
+    };
+
+    // Descripciones opcionales para cada palabra
+    const descripciones = {
+      paco: "Oscilaciones suaves con colorama",
+      mestizo: "Voronoi con tonos cálidos",
+      periquin: "Voronoi pixelado con noise",
+      kenya: "Noise con colorama invertido",
+      fuego: "Noise con modulación de escala",
+      delirio: "Oscilaciones con modulación",
+      amor: "Voronoi modulado con osc",
+      remix: "Noise modulado y diferenciado",
+      a: "Voronoi pixelado con escala",
+      b: "Osc modulado con noise",
+      c: "Noise con voronoi y kaleidoscopio",
+      d: "Formas geométricas rotativas",
+      e: "Voronoi rotativo multicolor",
+      f: "Oscilaciones pixeladas",
+      g: "Noise pixelado rotativo",
+      h: "Noise repetitivo modulado",
+      i: "Oscilaciones con kaleidoscopio",
+      j: "Voronoi multicolor pixelado",
+      k: "Oscilaciones rotativas",
+      traduccion: "Voronoi con colores RGB",
+      global: "Oscilaciones pixeladas y kaleid",
+      intraducibilidad: "Noise colorido pixelado",
+      follow: "Composición compleja modulada",
+      magt: "Oscilaciones dinámicas aleatorias"
+    };
+
+    const input = document.getElementById("input");
+
+    input.addEventListener("input", () => {
+      const texto = input.value.toLowerCase().trim();
+
+      // Si contiene comas: modulación encadenada
+      if (texto.includes(",")) {
+        const modWords = texto.split(",").map(w => w.trim()).filter(w => palabras[w]);
+        if (modWords.length >= 2) {
+          let base = palabras[modWords[0]]();
+          for (let i = 1; i < modWords.length; i++) {
+            base = palabras[modWords[i]]().modulate(base, 0.5 + 0.3 * Math.random());
+          }
+          base.out();
+          return;
+        }
+      }
+
+      // Si contiene comas: modulación encadenada
+      if (texto.includes("x")) {
+        const modWords = texto.split(",").map(w => w.trim()).filter(w => palabras[w]);
+        if (modWords.length >= 2) {
+          let base = palabras[modWords[0]]();
+          for (let i = 1; i < modWords.length; i++) {
+            base = palabras[modWords[i]]().modulateScale(base, 0.5 + 0.3 * Math.random());
+          }
+          base.out();
+          return;
+        }
+      }
+
+      // Si no hay coma, renderiza todo en capas independientes
+      const entradas = texto.split(/\s+/).map(w => w.trim()).filter(w => palabras[w]);
+      if (entradas.length > 0) {
+        // Componer blend entre todas
+        let comp = palabras[entradas[0]]();
+        for (let i = 1; i < entradas.length; i++) {
+          comp = comp.diff(palabras[entradas[i]](), 0.5);
+        }
+        comp.out();
+      }
+    });
+
+    // Funcionalidad del botón de palabras
+    const wordButton = document.getElementById("wordButton");
+    const wordPanel = document.getElementById("wordPanel");
+    const closePanel = document.getElementById("closePanel");
+    const wordList = document.getElementById("wordList");
+
+    // Generar lista de palabras
+    const palabrasKeys = Object.keys(palabras).sort();
+
+    palabrasKeys.forEach(palabra => {
+      const wordItem = document.createElement("div");
+      wordItem.className = "word-item";
+
+      const wordName = document.createElement("div");
+      wordName.className = "word-name";
+      wordName.textContent = palabra;
+
+      const wordDesc = document.createElement("div");
+      wordDesc.className = "word-desc";
+      wordDesc.textContent = descripciones[palabra] || "Patrón visual único";
+
+      wordItem.appendChild(wordName);
+      wordItem.appendChild(wordDesc);
+
+      // Al hacer click en una palabra, la agrega al textarea
+      wordItem.addEventListener("click", () => {
+        const currentText = input.value;
+        const newText = currentText ? currentText + " " + palabra : palabra;
+        input.value = newText;
+        // Disparar el evento input para activar la visualización
+        input.dispatchEvent(new Event('input'));
+        // Opcional: cerrar el panel después de seleccionar
+        wordPanel.classList.remove("show");
+      });
+
+      wordList.appendChild(wordItem);
+    });
+
+    // Mostrar/Ocultar panel
+    wordButton.addEventListener("click", () => {
+      wordPanel.classList.toggle("show");
+    });
+
+    closePanel.addEventListener("click", () => {
+      wordPanel.classList.remove("show");
+    });
+
+    // Cerrar panel al hacer click fuera
+    document.addEventListener("click", (event) => {
+      if (!wordPanel.contains(event.target) && !wordButton.contains(event.target) && wordPanel.classList.contains("show")) {
+        wordPanel.classList.remove("show");
+      }
+    });
+  </script>
+</body>
+</html>
