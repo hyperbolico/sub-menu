@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -42,151 +41,131 @@
       resize: none;
     }
 
-    /* Botón de palabras */
+    /* Botón de palabras - estilo sobrio */
     #wordButton {
       position: fixed;
       top: 20px;
       right: 20px;
-      background: rgba(0, 0, 0, 0.7);
-      color: white;
-      border: 2px solid white;
-      border-radius: 8px;
-      padding: 10px 20px;
-      font-size: 16px;
+      background: rgba(0, 0, 0, 0.6);
+      color: rgba(255, 255, 255, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 4px;
+      padding: 6px 12px;
+      font-size: 12px;
       cursor: pointer;
       z-index: 20;
       backdrop-filter: blur(4px);
-      transition: all 0.3s ease;
+      transition: all 0.2s ease;
       font-family: monospace;
+      letter-spacing: 0.5px;
     }
 
     #wordButton:hover {
-      background: rgba(255, 255, 255, 0.2);
-      transform: scale(1.05);
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      border-color: rgba(255, 255, 255, 0.6);
     }
 
-    /* Panel desplegable de palabras */
+    /* Panel desplegable - estilo sobrio */
     #wordPanel {
       position: fixed;
-      top: 70px;
+      top: 60px;
       right: 20px;
       background: rgba(0, 0, 0, 0.85);
       backdrop-filter: blur(8px);
-      border: 2px solid white;
-      border-radius: 10px;
-      padding: 15px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+      padding: 12px;
       z-index: 20;
-      max-width: 300px;
+      min-width: 200px;
+      max-width: 280px;
       max-height: 70vh;
       overflow-y: auto;
       display: none;
       font-family: monospace;
-      color: white;
-      transition: all 0.3s ease;
+      color: #ccc;
+      font-size: 12px;
     }
 
     #wordPanel.show {
       display: block;
-      animation: slideIn 0.3s ease;
-    }
-
-    @keyframes slideIn {
-      from {
-        opacity: 0;
-        transform: translateX(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateX(0);
-      }
     }
 
     #wordPanel h3 {
       margin: 0 0 10px 0;
-      text-align: center;
-      color: #ff6b6b;
-      border-bottom: 1px solid white;
+      text-align: left;
+      color: #aaa;
+      font-size: 11px;
+      font-weight: normal;
+      letter-spacing: 1px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
       padding-bottom: 5px;
     }
 
     .word-list {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 4px;
     }
 
     .word-item {
-      background: rgba(255, 255, 255, 0.1);
-      padding: 8px;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      border-left: 3px solid #ff6b6b;
-    }
-
-    .word-item:hover {
-      background: rgba(255, 255, 255, 0.2);
-      transform: translateX(-5px);
+      padding: 4px 0;
+      color: #aaa;
+      font-size: 11px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     }
 
     .word-name {
-      font-weight: bold;
-      color: #ff6b6b;
-      margin-bottom: 3px;
-    }
-
-    .word-desc {
-      font-size: 11px;
-      color: #ccc;
-      font-style: italic;
+      color: #ddd;
+      font-weight: normal;
     }
 
     .close-panel {
       position: absolute;
-      top: 5px;
+      top: 8px;
       right: 10px;
       cursor: pointer;
-      font-size: 20px;
-      color: white;
+      font-size: 14px;
+      color: #888;
       background: none;
       border: none;
-      font-weight: bold;
+      font-weight: normal;
+      padding: 0;
+      line-height: 1;
     }
 
     .close-panel:hover {
-      color: #ff6b6b;
+      color: #fff;
     }
 
-    /* Scrollbar personalizada */
+    /* Scrollbar sobria */
     #wordPanel::-webkit-scrollbar {
-      width: 8px;
+      width: 4px;
     }
 
     #wordPanel::-webkit-scrollbar-track {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.05);
     }
 
     #wordPanel::-webkit-scrollbar-thumb {
-      background: #ff6b6b;
-      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.2);
     }
 
     #wordPanel::-webkit-scrollbar-thumb:hover {
-      background: #ff4444;
+      background: rgba(255, 255, 255, 0.3);
     }
   </style>
 </head>
 <body>
-  <button id="wordButton">📖 Palabras disponibles</button>
-
+  <button id="wordButton">palabras</button>
+  
   <div id="wordPanel">
     <button class="close-panel" id="closePanel">✕</button>
-    <h3>✨ Palabras que activan patrones ✨</h3>
+    <h3>PALABRAS DISPONIBLES</h3>
     <div class="word-list" id="wordList"></div>
   </div>
 
-  <textarea id="input" placeholder="Escribe palabras y letras cortas (ej: paco, mestizo, a, b, c...)"></textarea>
+  <textarea id="input" placeholder="Escribe palabras: paco, mestizo, a, b, c..."></textarea>
 
   <script>
     const hydra = new Hydra({ detectAudio: false });
@@ -225,34 +204,6 @@
       },
     };
 
-    // Descripciones opcionales para cada palabra
-    const descripciones = {
-      paco: "Oscilaciones suaves con colorama",
-      mestizo: "Voronoi con tonos cálidos",
-      periquin: "Voronoi pixelado con noise",
-      kenya: "Noise con colorama invertido",
-      fuego: "Noise con modulación de escala",
-      delirio: "Oscilaciones con modulación",
-      amor: "Voronoi modulado con osc",
-      remix: "Noise modulado y diferenciado",
-      a: "Voronoi pixelado con escala",
-      b: "Osc modulado con noise",
-      c: "Noise con voronoi y kaleidoscopio",
-      d: "Formas geométricas rotativas",
-      e: "Voronoi rotativo multicolor",
-      f: "Oscilaciones pixeladas",
-      g: "Noise pixelado rotativo",
-      h: "Noise repetitivo modulado",
-      i: "Oscilaciones con kaleidoscopio",
-      j: "Voronoi multicolor pixelado",
-      k: "Oscilaciones rotativas",
-      traduccion: "Voronoi con colores RGB",
-      global: "Oscilaciones pixeladas y kaleid",
-      intraducibilidad: "Noise colorido pixelado",
-      follow: "Composición compleja modulada",
-      magt: "Oscilaciones dinámicas aleatorias"
-    };
-
     const input = document.getElementById("input");
 
     input.addEventListener("input", () => {
@@ -271,9 +222,9 @@
         }
       }
 
-      // Si contiene comas: modulación encadenada
+      // Si contiene x: modulación escala
       if (texto.includes("x")) {
-        const modWords = texto.split(",").map(w => w.trim()).filter(w => palabras[w]);
+        const modWords = texto.split("x").map(w => w.trim()).filter(w => palabras[w]);
         if (modWords.length >= 2) {
           let base = palabras[modWords[0]]();
           for (let i = 1; i < modWords.length; i++) {
@@ -284,10 +235,9 @@
         }
       }
 
-      // Si no hay coma, renderiza todo en capas independientes
+      // Si no hay separadores especiales, renderiza todo en capas independientes
       const entradas = texto.split(/\s+/).map(w => w.trim()).filter(w => palabras[w]);
       if (entradas.length > 0) {
-        // Componer blend entre todas
         let comp = palabras[entradas[0]]();
         for (let i = 1; i < entradas.length; i++) {
           comp = comp.diff(palabras[entradas[i]](), 0.5);
@@ -296,58 +246,50 @@
       }
     });
 
-    // Funcionalidad del botón de palabras
+    // Funcionalidad del botón de palabras - solo visualización
     const wordButton = document.getElementById("wordButton");
     const wordPanel = document.getElementById("wordPanel");
     const closePanel = document.getElementById("closePanel");
     const wordList = document.getElementById("wordList");
 
-    // Generar lista de palabras
+    // Generar lista de palabras (solo texto, sin interacción)
     const palabrasKeys = Object.keys(palabras).sort();
-
+    
     palabrasKeys.forEach(palabra => {
       const wordItem = document.createElement("div");
       wordItem.className = "word-item";
-
-      const wordName = document.createElement("div");
+      
+      const wordName = document.createElement("span");
       wordName.className = "word-name";
       wordName.textContent = palabra;
-
-      const wordDesc = document.createElement("div");
-      wordDesc.className = "word-desc";
-      wordDesc.textContent = descripciones[palabra] || "Patrón visual único";
-
+      
       wordItem.appendChild(wordName);
-      wordItem.appendChild(wordDesc);
-
-      // Al hacer click en una palabra, la agrega al textarea
-      wordItem.addEventListener("click", () => {
-        const currentText = input.value;
-        const newText = currentText ? currentText + " " + palabra : palabra;
-        input.value = newText;
-        // Disparar el evento input para activar la visualización
-        input.dispatchEvent(new Event('input'));
-        // Opcional: cerrar el panel después de seleccionar
-        wordPanel.classList.remove("show");
-      });
-
       wordList.appendChild(wordItem);
     });
 
-    // Mostrar/Ocultar panel
-    wordButton.addEventListener("click", () => {
+    // Mostrar/Ocultar panel - se mantiene activo hasta hacer click
+    wordButton.addEventListener("click", (e) => {
+      e.stopPropagation();
       wordPanel.classList.toggle("show");
     });
 
-    closePanel.addEventListener("click", () => {
+    closePanel.addEventListener("click", (e) => {
+      e.stopPropagation();
       wordPanel.classList.remove("show");
     });
 
-    // Cerrar panel al hacer click fuera
+    // Cerrar solo si se hace click fuera del panel Y fuera del botón
     document.addEventListener("click", (event) => {
-      if (!wordPanel.contains(event.target) && !wordButton.contains(event.target) && wordPanel.classList.contains("show")) {
+      if (wordPanel.classList.contains("show") && 
+          !wordPanel.contains(event.target) && 
+          !wordButton.contains(event.target)) {
         wordPanel.classList.remove("show");
       }
+    });
+
+    // Evitar que el panel se cierre al hacer click dentro de él
+    wordPanel.addEventListener("click", (e) => {
+      e.stopPropagation();
     });
   </script>
 </body>
